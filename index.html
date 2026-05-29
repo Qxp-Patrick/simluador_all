@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seus Investimentos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Seus Investimentos Mobile</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { 
@@ -11,6 +11,7 @@
             margin: 0; 
             padding: 0; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            -webkit-tap-highlight-color: transparent;
         }
         
         body { 
@@ -41,26 +42,31 @@
             margin-bottom: 20px;
         }
 
-        /* Botões */
+        /* Botões otimizados para Touch */
         button { 
             width: 100%;
             background-color: #2563eb; 
             color: white; 
             border: none; 
-            padding: 12px 20px; 
+            padding: 14px 20px; 
             border-radius: 8px; 
             cursor: pointer; 
             font-weight: 600; 
-            font-size: 15px;
+            font-size: 16px;
             box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
             transition: background 0.2s, transform 0.1s; 
+            display: block;
         }
         button:active {
+            background-color: #1d4ed8;
             transform: scale(0.98);
         }
         button.btn-add { 
             background-color: #10b981; 
             box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+        }
+        button.btn-add:active {
+            background-color: #059669;
         }
         button.btn-delete { 
             background-color: #ef4444; 
@@ -68,6 +74,7 @@
             font-size: 13px;
             width: auto;
             box-shadow: none;
+            display: inline-block;
         }
 
         /* Card de cada Ativo (Layout estilo Coluna/Mobile) */
@@ -116,7 +123,7 @@
         
         input, select { 
             width: 100%;
-            padding: 10px 12px; 
+            padding: 12px; 
             border: 1px solid #cbd5e1; 
             border-radius: 6px; 
             font-size: 15px; 
@@ -124,6 +131,7 @@
             color: #1e293b;
             outline: none;
             transition: border-color 0.2s;
+            -webkit-appearance: none; /* Remove estilos padrão do iOS */
         }
         input:focus, select:focus {
             border-color: #2563eb;
@@ -209,16 +217,27 @@
     </header>
 
     <div class="actions-top">
-        <button class="btn-add" onclick="adicionarAtivo()">+ Adicionar Novo Ativo</button>
+        <button class="btn-add" id="btn-adicionar">+ Adicionar Novo Ativo</button>
     </div>
 
     <div id="lista-ativos"></div>
 </div>
 
 <script>
-    // Recupera a lista ou inicia vazia
     let listaAtivos = JSON.parse(localStorage.getItem('simulador_ativos_v2')) || [];
     let instanciasGraficos = {};
+
+    // Vincula os eventos de clique e toque de forma segura para mobile
+    const btnAdd = document.getElementById('btn-adicionar');
+    if (btnAdd) {
+        ['click', 'touchend'].forEach(evtName => {
+            btnAdd.addEventListener(evtName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                adicionarAtivo();
+            }, { passive: false });
+        });
+    }
 
     function adicionarAtivo() {
         const novoAtivo = {
@@ -226,12 +245,12 @@
             nome: 'Novo Ativo',
             dataInclusao: new Date().toISOString().split('T')[0],
             valorInicial: 1000,
-            tipoRegra: 'pre', // pre, pos_cdi, ipca_mais, selic_mais
-            taxaPre: 10.50,   // usado se 'pre'
-            porcentagemCdi: 100, // usado se 'pos_cdi'
-            taxaSelicBase: 10.50, // taxa selic de mercado informada para esse ativo
-            taxaIpcaBase: 4.50,   // taxa ipca de mercado informada para esse ativo
-            taxaAdicional: 6.00   // o "+" do IPCA+6% ou SELIC+2%
+            tipoRegra: 'pre', 
+            taxaPre: 10.50,   
+            porcentagemCdi: 100, 
+            taxaSelicBase: 10.50, 
+            taxaIpcaBase: 4.50,   
+            taxaAdicional: 6.00   
         };
         listaAtivos.push(novoAtivo);
         salvarDados();
@@ -256,18 +275,20 @@
             }
             salvarDados();
             
-            // Se mudou o tipo de regra, precisamos redesenhar o card para mostrar os inputs certos
             if (campo === 'tipoRegra') {
                 renderizarAtivos();
             } else {
-                // Caso contrário, apenas recalcula valores e atualiza gráficos mantendo a tela estável
                 calcularResultadosAtivo(ativo);
             }
         }
     }
 
     function salvarDados() {
-        localStorage.setItem('simulador_ativos_v2', JSON.stringify(listaAtivos));
+        try {
+            localStorage.setItem('simulador_ativos_v2', JSON.stringify(listaAtivos));
+        } catch (e) {
+            console.error("Erro ao salvar no LocalStorage: ", e);
+        }
     }
 
     function diferencaEmMeses(dataInicio, dataFim) {
@@ -294,46 +315,45 @@
             card.className = 'ativo-card';
             card.id = `card-${ativo.id}`;
             
-            // Gerar HTML condicional dos inputs de taxas de acordo com a regra selecionada
             let htmlInputsTaxa = '';
             if (ativo.tipoRegra === 'pre') {
                 htmlInputsTaxa = `
                     <div class="form-group">
                         <label>Taxa Pré-Fixada Anual (%)</label>
-                        <input type="number" value="${ativo.taxaPre}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaPre', this.value)">
+                        <input type="number" inputmode="decimal" value="${ativo.taxaPre}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaPre', this.value)">
                     </div>
                 `;
             } else if (ativo.tipoRegra === 'pos_cdi') {
                 htmlInputsTaxa = `
                     <div class="form-group">
                         <label>Valor da SELIC/CDI Atual (%)</label>
-                        <input type="number" value="${ativo.taxaSelicBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaSelicBase', this.value)">
+                        <input type="number" inputmode="decimal" value="${ativo.taxaSelicBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaSelicBase', this.value)">
                     </div>
                     <div class="form-group">
                         <label>% do CDI contratado</label>
-                        <input type="number" value="${ativo.porcentagemCdi}" step="1" oninput="atualizarAtivo('${ativo.id}', 'porcentagemCdi', this.value)">
+                        <input type="number" inputmode="numeric" value="${ativo.porcentagemCdi}" step="1" oninput="atualizarAtivo('${ativo.id}', 'porcentagemCdi', this.value)">
                     </div>
                 `;
             } else if (ativo.tipoRegra === 'ipca_mais') {
                 htmlInputsTaxa = `
                     <div class="form-group">
                         <label>IPCA Médio Estimado (%)</label>
-                        <input type="number" value="${ativo.taxaIpcaBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaIpcaBase', this.value)">
+                        <input type="number" inputmode="decimal" value="${ativo.taxaIpcaBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaIpcaBase', this.value)">
                     </div>
                     <div class="form-group">
                         <label>Taxa Fixa Adicional (+ %)</label>
-                        <input type="number" value="${ativo.taxaAdicional}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaAdicional', this.value)">
+                        <input type="number" inputmode="decimal" value="${ativo.taxaAdicional}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaAdicional', this.value)">
                     </div>
                 `;
             } else if (ativo.tipoRegra === 'selic_mais') {
                 htmlInputsTaxa = `
                     <div class="form-group">
                         <label>Taxa SELIC Base (%)</label>
-                        <input type="number" value="${ativo.taxaSelicBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaSelicBase', this.value)">
+                        <input type="number" inputmode="decimal" value="${ativo.taxaSelicBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaSelicBase', this.value)">
                     </div>
                     <div class="form-group">
                         <label>Taxa Fixa Adicional (+ %)</label>
-                        <input type="number" value="${ativo.taxaAdicional}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaAdicional', this.value)">
+                        <input type="number" inputmode="decimal" value="${ativo.taxaAdicional}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaAdicional', this.value)">
                     </div>
                 `;
             }
@@ -356,7 +376,7 @@
 
                 <div class="form-group">
                     <label>Valor Inicial Investido (R$)</label>
-                    <input type="number" value="${ativo.valorInicial}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'valorInicial', this.value)">
+                    <input type="number" inputmode="decimal" value="${ativo.valorInicial}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'valorInicial', this.value)">
                 </div>
 
                 <div class="form-group">
@@ -373,8 +393,7 @@
                     ${htmlInputsTaxa}
                 </div>
                 
-                <div class="ativo-results" id="resultados-${ativo.id}">
-                    </div>
+                <div class="ativo-results" id="resultados-${ativo.id}"></div>
                 
                 <div class="ativo-charts">
                     <div class="chart-wrapper">
@@ -395,7 +414,6 @@
         const hoje = new Date().toISOString().split('T')[0];
         const meses = diferencaEmMeses(ativo.dataInclusao, hoje);
         
-        // Determina a taxa anual equivalente configurada exclusivamente para este ativo
         let taxaAnualEquivalente = 0;
         
         if (ativo.tipoRegra === 'pre') {
@@ -403,7 +421,6 @@
         } else if (ativo.tipoRegra === 'pos_cdi') {
             taxaAnualEquivalente = ativo.taxaSelicBase * (ativo.porcentagemCdi / 100);
         } else if (ativo.tipoRegra === 'ipca_mais') {
-            // Conta de juros compostos para somar taxas inflacionárias: (1+IPCA)*(1+TaxaFixa) - 1
             const ipcaM = ativo.taxaIpcaBase / 100;
             const adiM = ativo.taxaAdicional / 100;
             taxaAnualEquivalente = ((1 + ipcaM) * (1 + adiM) - 1) * 100;
@@ -413,7 +430,6 @@
             taxaAnualEquivalente = ((1 + selicM) * (1 + adiM) - 1) * 100;
         }
 
-        // Converte taxa anual para taxa mensal (Juros Compostos)
         const taxaMensal = Math.pow(1 + (taxaAnualEquivalente / 100), 1 / 12) - 1;
         
         let dadosEvolucao = [];
@@ -456,7 +472,6 @@
         if (instanciasGraficos[`linha-${id}`]) instanciasGraficos[`linha-${id}`].destroy();
         if (instanciasGraficos[`pizza-${id}`]) instanciasGraficos[`pizza-${id}`].destroy();
 
-        // Linha - Evolução do Patrimônio
         instanciasGraficos[`linha-${id}`] = new Chart(ctxLinha, {
             type: 'line',
             data: {
@@ -475,16 +490,11 @@
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false, 
-                plugins: { 
-                    legend: { display: false } 
-                },
-                scales: {
-                    x: { grid: { display: false } }
-                }
+                plugins: { legend: { display: false } },
+                scales: { x: { grid: { display: false } } }
             }
         });
 
-        // Pizza - Proporção
         instanciasGraficos[`pizza-${id}`] = new Chart(ctxPizza, {
             type: 'pie',
             data: {
@@ -498,14 +508,11 @@
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12 } }
-                }
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
             }
         });
     }
 
-    // Inicialização da Tela
     renderizarAtivos();
 </script>
 
