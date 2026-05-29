@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seus Investimentos Mobile</title>
+    <title>Simulador de Investimentos Mobile</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { 
@@ -42,46 +42,42 @@
             margin-bottom: 20px;
         }
 
-        /* Botões otimizados para Touch */
-        button { 
+        /* Botão Grande Otimizado com área de toque expandida para Mobile */
+        .btn-add { 
             width: 100%;
-            background-color: #2563eb; 
+            background-color: #10b981; 
             color: white; 
             border: none; 
-            padding: 14px 20px; 
+            padding: 16px 20px; 
             border-radius: 8px; 
             cursor: pointer; 
-            font-weight: 600; 
+            font-weight: 700; 
             font-size: 16px;
-            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-            transition: background 0.2s, transform 0.1s; 
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+            transition: background 0.2s;
             display: block;
+            text-align: center;
         }
-        button:active {
-            background-color: #1d4ed8;
-            transform: scale(0.98);
-        }
-        button.btn-add { 
-            background-color: #10b981; 
-            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-        }
-        button.btn-add:active {
+        .btn-add:active {
             background-color: #059669;
         }
-        button.btn-delete { 
+        
+        .btn-delete { 
             background-color: #ef4444; 
+            color: white;
+            border: none;
             padding: 8px 15px;
+            border-radius: 6px;
             font-size: 13px;
-            width: auto;
-            box-shadow: none;
-            display: inline-block;
+            font-weight: 600;
+            cursor: pointer;
         }
 
-        /* Card de cada Ativo (Layout estilo Coluna/Mobile) */
+        /* Card de cada Ativo */
         .ativo-card { 
             background: #fff; 
             border-radius: 12px; 
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
             padding: 16px; 
             margin-bottom: 24px; 
             border-top: 6px solid #2563eb;
@@ -102,11 +98,8 @@
             font-size: 16px; 
             color: #1e293b;
             font-weight: 700;
-            word-break: break-all;
-            padding-right: 10px;
         }
 
-        /* Inputs empilhados verticalmente */
         .form-group { 
             display: flex; 
             flex-direction: column; 
@@ -114,11 +107,10 @@
         }
         
         .form-group label { 
-            font-size: 12px; 
+            font-size: 11px; 
             font-weight: 600; 
             color: #64748b; 
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
         
         input, select { 
@@ -130,14 +122,9 @@
             background-color: #fff;
             color: #1e293b;
             outline: none;
-            transition: border-color 0.2s;
-            -webkit-appearance: none; /* Remove estilos padrão do iOS */
-        }
-        input:focus, select:focus {
-            border-color: #2563eb;
+            -webkit-appearance: none;
         }
 
-        /* Container de Taxas Dinâmicas baseado no tipo */
         .taxa-dinamica-container {
             background-color: #f8fafc;
             padding: 12px;
@@ -148,7 +135,6 @@
             gap: 12px;
         }
 
-        /* Bloco de Resultados */
         .ativo-results { 
             background: #f0fdf4; 
             padding: 14px; 
@@ -161,15 +147,8 @@
             justify-content: space-between;
             font-size: 14px; 
             margin-bottom: 6px; 
-            color: #334155;
         }
-        .result-row:last-child {
-            margin-bottom: 0;
-        }
-        .result-row span { 
-            font-weight: 600; 
-            color: #0f172a; 
-        }
+        .result-row span { font-weight: 600; }
         
         .result-total-box {
             margin-top: 10px;
@@ -177,35 +156,23 @@
             border-top: 1px solid #bbf7d0;
             text-align: center;
         }
-        .result-total-label {
-            font-size: 12px;
-            color: #166534;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
         .result-total-val {
             font-size: 22px; 
             font-weight: 800;
             color: #15803d; 
         }
         
-        /* Gráficos empilhados abaixo */
         .ativo-charts { 
             display: flex; 
             flex-direction: column;
             gap: 20px; 
-            margin-top: 8px;
         }
         
         .chart-wrapper { 
             position: relative; 
-            height: 220px; 
+            height: 200px; 
             width: 100%; 
             background: #fff;
-            padding: 5px;
-        }
-        .chart-wrapper.pizza {
-            height: 200px;
         }
     </style>
 </head>
@@ -213,35 +180,34 @@
 
 <div class="container">
     <header>
-        <h1>Seus Investimentos</h1>
+        <h1>Simulador de Investimentos</h1>
     </header>
 
     <div class="actions-top">
-        <button class="btn-add" id="btn-adicionar">+ Adicionar Novo Ativo</button>
+        <button class="btn-add" onclick="adicionarAtivo()">+ Adicionar Novo Ativo</button>
     </div>
 
     <div id="lista-ativos"></div>
 </div>
 
 <script>
-    let listaAtivos = JSON.parse(localStorage.getItem('simulador_ativos_v2')) || [];
+    let listaAtivos = [];
     let instanciasGraficos = {};
 
-    // Vincula os eventos de clique e toque de forma segura para mobile
-    const btnAdd = document.getElementById('btn-adicionar');
-    if (btnAdd) {
-        ['click', 'touchend'].forEach(evtName => {
-            btnAdd.addEventListener(evtName, function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                adicionarAtivo();
-            }, { passive: false });
-        });
+    // Força o carregamento seguro do LocalStorage limpando potenciais dados corrompidos de versões anteriores
+    try {
+        const dadosSalvos = localStorage.getItem('simulador_ativos_v3');
+        if (dadosSalvos) {
+            listaAtivos = JSON.parse(dadosSalvos);
+        }
+    } catch (e) {
+        console.error("Erro ao ler localStorage", e);
+        listaAtivos = [];
     }
 
     function adicionarAtivo() {
         const novoAtivo = {
-            id: Date.now().toString(),
+            id: "id_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
             nome: 'Novo Ativo',
             dataInclusao: new Date().toISOString().split('T')[0],
             valorInicial: 1000,
@@ -258,7 +224,7 @@
     }
 
     function deletarAtivo(id) {
-        if(confirm("Deseja realmente remover este ativo?")) {
+        if(confirm("Deseja remover este ativo?")) {
             listaAtivos = listaAtivos.filter(a => a.id !== id);
             salvarDados();
             renderizarAtivos();
@@ -285,9 +251,9 @@
 
     function salvarDados() {
         try {
-            localStorage.setItem('simulador_ativos_v2', JSON.stringify(listaAtivos));
+            localStorage.setItem('simulador_ativos_v3', JSON.stringify(listaAtivos));
         } catch (e) {
-            console.error("Erro ao salvar no LocalStorage: ", e);
+            console.error("Erro ao salvar dados", e);
         }
     }
 
@@ -303,57 +269,57 @@
 
     function renderizarAtivos() {
         const container = document.getElementById('lista-ativos');
+        if (!container) return;
         container.innerHTML = '';
 
         if(listaAtivos.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:#64748b; padding:40px 10px;">Nenhum ativo cadastrado. Clique no botão acima para começar!</div>`;
+            container.innerHTML = `<div style="text-align:center; color:#64748b; padding:40px 10px;">Nenhum ativo cadastrado. Clique acima para começar!</div>`;
             return;
         }
 
         listaAtivos.forEach(ativo => {
             const card = document.createElement('div');
             card.className = 'ativo-card';
-            card.id = `card-${ativo.id}`;
             
             let htmlInputsTaxa = '';
             if (ativo.tipoRegra === 'pre') {
                 htmlInputsTaxa = `
                     <div class="form-group">
                         <label>Taxa Pré-Fixada Anual (%)</label>
-                        <input type="number" inputmode="decimal" value="${ativo.taxaPre}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaPre', this.value)">
+                        <input type="number" step="0.01" value="${ativo.taxaPre}" oninput="atualizarAtivo('${ativo.id}', 'taxaPre', this.value)">
                     </div>
                 `;
             } else if (ativo.tipoRegra === 'pos_cdi') {
                 htmlInputsTaxa = `
                     <div class="form-group">
                         <label>Valor da SELIC/CDI Atual (%)</label>
-                        <input type="number" inputmode="decimal" value="${ativo.taxaSelicBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaSelicBase', this.value)">
+                        <input type="number" step="0.01" value="${ativo.taxaSelicBase}" oninput="atualizarAtivo('${ativo.id}', 'taxaSelicBase', this.value)">
                     </div>
                     <div class="form-group">
                         <label>% do CDI contratado</label>
-                        <input type="number" inputmode="numeric" value="${ativo.porcentagemCdi}" step="1" oninput="atualizarAtivo('${ativo.id}', 'porcentagemCdi', this.value)">
+                        <input type="number" step="1" value="${ativo.porcentagemCdi}" oninput="atualizarAtivo('${ativo.id}', 'porcentagemCdi', this.value)">
                     </div>
                 `;
             } else if (ativo.tipoRegra === 'ipca_mais') {
                 htmlInputsTaxa = `
                     <div class="form-group">
                         <label>IPCA Médio Estimado (%)</label>
-                        <input type="number" inputmode="decimal" value="${ativo.taxaIpcaBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaIpcaBase', this.value)">
+                        <input type="number" step="0.01" value="${ativo.taxaIpcaBase}" oninput="atualizarAtivo('${ativo.id}', 'taxaIpcaBase', this.value)">
                     </div>
                     <div class="form-group">
                         <label>Taxa Fixa Adicional (+ %)</label>
-                        <input type="number" inputmode="decimal" value="${ativo.taxaAdicional}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaAdicional', this.value)">
+                        <input type="number" step="0.01" value="${ativo.taxaAdicional}" oninput="atualizarAtivo('${ativo.id}', 'taxaAdicional', this.value)">
                     </div>
                 `;
             } else if (ativo.tipoRegra === 'selic_mais') {
                 htmlInputsTaxa = `
                     <div class="form-group">
                         <label>Taxa SELIC Base (%)</label>
-                        <input type="number" inputmode="decimal" value="${ativo.taxaSelicBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaSelicBase', this.value)">
+                        <input type="number" step="0.01" value="${ativo.taxaSelicBase}" oninput="atualizarAtivo('${ativo.id}', 'taxaSelicBase', this.value)">
                     </div>
                     <div class="form-group">
                         <label>Taxa Fixa Adicional (+ %)</label>
-                        <input type="number" inputmode="decimal" value="${ativo.taxaAdicional}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaAdicional', this.value)">
+                        <input type="number" step="0.01" value="${ativo.taxaAdicional}" oninput="atualizarAtivo('${ativo.id}', 'taxaAdicional', this.value)">
                     </div>
                 `;
             }
@@ -366,155 +332,4 @@
 
                 <div class="form-group">
                     <label>Nome do Ativo</label>
-                    <input type="text" value="${ativo.nome}" oninput="document.getElementById('title-text-${ativo.id}').innerText = this.value; atualizarAtivo('${ativo.id}', 'nome', this.value)">
-                </div>
-
-                <div class="form-group">
-                    <label>Data de Inclusão</label>
-                    <input type="date" value="${ativo.dataInclusao}" onchange="atualizarAtivo('${ativo.id}', 'dataInclusao', this.value)">
-                </div>
-
-                <div class="form-group">
-                    <label>Valor Inicial Investido (R$)</label>
-                    <input type="number" inputmode="decimal" value="${ativo.valorInicial}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'valorInicial', this.value)">
-                </div>
-
-                <div class="form-group">
-                    <label>Tipo de Rentabilidade</label>
-                    <select onchange="atualizarAtivo('${ativo.id}', 'tipoRegra', this.value)">
-                        <option value="pre" ${ativo.tipoRegra === 'pre' ? 'selected' : ''}>Pré-Fixado Puro</option>
-                        <option value="pos_cdi" ${ativo.tipoRegra === 'pos_cdi' ? 'selected' : ''}>Pós-Fixado (% do CDI)</option>
-                        <option value="ipca_mais" ${ativo.tipoRegra === 'ipca_mais' ? 'selected' : ''}>IPCA + Taxa Fixa (ex: IPCA+6%)</option>
-                        <option value="selic_mais" ${ativo.tipoRegra === 'selic_mais' ? 'selected' : ''}>SELIC + Taxa Fixa</option>
-                    </select>
-                </div>
-
-                <div class="taxa-dinamica-container">
-                    ${htmlInputsTaxa}
-                </div>
-                
-                <div class="ativo-results" id="resultados-${ativo.id}"></div>
-                
-                <div class="ativo-charts">
-                    <div class="chart-wrapper">
-                        <canvas id="chart-linha-${ativo.id}"></canvas>
-                    </div>
-                    <div class="chart-wrapper pizza">
-                        <canvas id="chart-pizza-${ativo.id}"></canvas>
-                    </div>
-                </div>
-            `;
-            
-            container.appendChild(card);
-            calcularResultadosAtivo(ativo);
-        });
-    }
-
-    function calcularResultadosAtivo(ativo) {
-        const hoje = new Date().toISOString().split('T')[0];
-        const meses = diferencaEmMeses(ativo.dataInclusao, hoje);
-        
-        let taxaAnualEquivalente = 0;
-        
-        if (ativo.tipoRegra === 'pre') {
-            taxaAnualEquivalente = ativo.taxaPre;
-        } else if (ativo.tipoRegra === 'pos_cdi') {
-            taxaAnualEquivalente = ativo.taxaSelicBase * (ativo.porcentagemCdi / 100);
-        } else if (ativo.tipoRegra === 'ipca_mais') {
-            const ipcaM = ativo.taxaIpcaBase / 100;
-            const adiM = ativo.taxaAdicional / 100;
-            taxaAnualEquivalente = ((1 + ipcaM) * (1 + adiM) - 1) * 100;
-        } else if (ativo.tipoRegra === 'selic_mais') {
-            const selicM = ativo.taxaSelicBase / 100;
-            const adiM = ativo.taxaAdicional / 100;
-            taxaAnualEquivalente = ((1 + selicM) * (1 + adiM) - 1) * 100;
-        }
-
-        const taxaMensal = Math.pow(1 + (taxaAnualEquivalente / 100), 1 / 12) - 1;
-        
-        let dadosEvolucao = [];
-        let labelsMeses = [];
-        let valorAcumulado = ativo.valorInicial;
-
-        for (let i = 0; i <= meses; i++) {
-            if (i > 0) {
-                valorAcumulado = valorAcumulado * (1 + taxaMensal);
-            }
-            dadosEvolucao.push(valorAcumulado.toFixed(2));
-            labelsMeses.push(`Mês ${i}`);
-        }
-
-        const rendimentoTotal = valorAcumulado - ativo.valorInicial;
-        const divResultados = document.getElementById(`resultados-${ativo.id}`);
-        
-        if (divResultados) {
-            divResultados.innerHTML = `
-                <div class="result-row">Tempo decorrido: <span>${meses} meses</span></div>
-                <div class="result-row">Taxa Anual Calculada: <span>${taxaAnualEquivalente.toFixed(2)}% a.a.</span></div>
-                <div class="result-row">Capital Inicial: <span>R$ ${ativo.valorInicial.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
-                <div class="result-row">Rendimento Bruto: <span>R$ ${rendimentoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
-                <div class="result-total-box">
-                    <div class="result-total-label">Valor Atual Calculado</div>
-                    <div class="result-total-val">R$ ${valorAcumulado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                </div>
-            `;
-        }
-
-        gerarOuAtualizarGraficos(ativo.id, labelsMeses, dadosEvolucao, ativo.valorInicial, rendimentoTotal);
-    }
-
-    function gerarOuAtualizarGraficos(id, labels, dadosLinha, valorInicial, rendimento) {
-        const ctxLinha = document.getElementById(`chart-linha-${id}`);
-        const ctxPizza = document.getElementById(`chart-pizza-${id}`);
-
-        if (!ctxLinha || !ctxPizza) return;
-
-        if (instanciasGraficos[`linha-${id}`]) instanciasGraficos[`linha-${id}`].destroy();
-        if (instanciasGraficos[`pizza-${id}`]) instanciasGraficos[`pizza-${id}`].destroy();
-
-        instanciasGraficos[`linha-${id}`] = new Chart(ctxLinha, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Evolução (R$)',
-                    data: dadosLinha,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.05)',
-                    fill: true,
-                    tension: 0.15,
-                    borderWidth: 2.5,
-                    pointRadius: labels.length > 24 ? 0 : 3
-                }]
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                plugins: { legend: { display: false } },
-                scales: { x: { grid: { display: false } } }
-            }
-        });
-
-        instanciasGraficos[`pizza-${id}`] = new Chart(ctxPizza, {
-            type: 'pie',
-            data: {
-                labels: ['Capital Inicial', 'Rendimentos'],
-                datasets: [{
-                    data: [valorInicial.toFixed(2), rendimento > 0 ? rendimento.toFixed(2) : 0],
-                    backgroundColor: ['#475569', '#10b981'],
-                    borderWidth: 1
-                }]
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
-            }
-        });
-    }
-
-    renderizarAtivos();
-</script>
-
-</body>
-</html>
+                    <input type="text" value="${ativo.nome}" oninput="document.getElementById('title-text-${
