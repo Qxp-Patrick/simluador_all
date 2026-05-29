@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Simulador de Investimentos</title>
+
+  <!-- Chart.js removido da CDN para compatibilidade offline/mobile -->
+<script>
+/*
+  Mini gráfico compatível offline/mobile.
+  Substitui Chart.js em WebView Android.
+*/
+class SimpleChart {
+  constructor(canvas, config) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.config = config;
+    this.draw();
+  }
+
+  destroy() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  draw() {
+    const type = this.config.type;
+
+    if(type === 'doughnut') {
+      this.drawPizza();
+    }
+
+    if(type === 'line') {
+      this.drawLine();
+    }
+  }
+
+  drawPizza() {
+    const ctx = this.ctx;
+    const data = this.config.data.datasets[0].data;
+
+    const total = data.reduce((a,b)=>a+b,0);
+
+    const width = this.canvas.width = this.canvas.offsetWidth;
+    const height = this.canvas.height = 240;
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radius = 70;
+
+    let start = 0;
+
+    const colors = ['#2563eb','#22c55e','#f59e0b','#ef4444'];
+
+    data.forEach((value,index)=>{
+      const slice = (value / total) * Math.PI * 2;
+
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, start, start + slice);
+      ctx.closePath();
+      ctx.fillStyle = colors[index % colors.length];
+      ctx.fill();
+
+      start += slice;
+    });
+  }
+
+  drawLine() {
+    const ctx = this.ctx;
+
+    const values = this.config.data.datasets[0].data;
+
+    const width = this.canvas.width = this.canvas.offsetWidth;
+    const height = this.canvas.height = 240;
+
+    ctx.clearRect(0,0,width,height);
+
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+
+    const padding = 30;
+
+    ctx.beginPath();
+    ctx.strokeStyle = '#22c55e';
+    ctx.lineWidth = 3;
+
+    values.forEach((value,index)=>{
+      const x = padding + (index * ((width - padding*2)/(values.length-1 || 1)));
+      const y = height - padding - ((value-min)/(max-min || 1)) * (height-padding*2);
+
+      if(index === 0) {
+        ctx.moveTo(x,y);
+      } else {
+        ctx.lineTo(x,y);
+      }
+    });
+
+    ctx.stroke();
+  }
+}
+
+window.Chart = SimpleChart;
+</script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 14px;
+      padding-bottom: 100px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .summary {
+      background: linear-gradient(145deg, #1e293b, #111827);
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 20px;
+      border: 1px solid #334155;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .summary-item {
+      background: #0f172a;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid #1e293b;
+    }
+
+    .summary-item small {
+      color: #94a3b8;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .summary-item strong {
+      font-size: 18px;
+    }
+
+    .card {
+      background: linear-gradient(145deg, #1e293b, #111827);
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 22px;
+      border: 1px solid #334155;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      gap: 10px;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: bold;
+      flex: 1;
+      word-break: break-word;
+    }
+
+    .delete-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    label {
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: #0f172a;
+      color: white;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .result-box {
+      margin-top: 16px;
+      background: #020617;
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid #1e293b;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .result-item {
+      background: #111827;
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .result-item small {
+      color: #94a3b8;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .result-item strong {
+      font-size: 18px;
+      word-break: break-word;
+    }
+
+    .green {
+      color: #22c55e;
+    }
+
+    .charts {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .chart-container {
+      background: #0f172a;
+      border-radius: 16px;
+      padding: 12px;
+      border: 1px solid #1e293b;
+    }
+
+    .chart-title {
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #cbd5e1;
+    }
+
+    canvas {
+      width: 100% !important;
+      max-height: 260px !important;
+    }
+
+    .add-btn {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 30px);
+      max-width: 500px;
+      background: linear-gradient(145deg, #2563eb, #1d4ed8);
+      color: white;
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 10px 30px rgba(37,99,235,0.4);
+    }
+
+    .tag {
+      display: inline-block;
+      background: #1d4ed8;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    @media (min-width: 768px) {
+      body {
+        max-width: 900px;
+        margin: auto;
+      }
+
+      .grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📈 Simulador de Investimentos</h1>
+
+  <div class="subtitle">
+    Controle seus ativos com cálculos automáticos, gráficos e salvamento local.
+  </div>
+
+  <div class="summary">
+    <h2>Resumo da Carteira</h2>
+
+    <div class="summary-grid">
+      <div class="summary-item">
+        <small>Total Investido</small>
+        <strong id="totalInvestido">R$ 0,00</strong>
+      </div>
+
+      <div class="summary-item">
+        <small>Total Atual</small>
+        <strong class="green" id="totalAtual">R$ 0,00</strong>
+      </div>
+
+      <div class="summary-item">
+        <small>Lucro Estimado</small>
+        <strong class="green" id="lucroTotal">R$ 0,00</strong>
+      </div>
+
+      <div class="summary-item">
+        <small>Quantidade</small>
+        <strong id="quantidadeAtivos">0</strong>
+      </div>
+    </div>
+  </div>
+
+  <div id="ativosContainer"></div>
+
+  <button class="add-btn" id="addAtivoBtn">
+    + Adicionar Ativo
+  </button>
+
+<script>
+
+let ativos = JSON.parse(localStorage.getItem('ativosInvestimentos')) || [];
+let charts = {};
+
+function salvar() {
+  localStorage.setItem('ativosInvestimentos', JSON.stringify(ativos));
+}
+
+function formatarMoeda(valor) {
+  return valor.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  });
+}
+
+function calcularMeses(dataInicio) {
+  const inicio = new Date(dataInicio);
+  const hoje = new Date();
+
+  let meses = (hoje.getFullYear() - inicio.getFullYear()) * 12;
+  meses += hoje.getMonth() - inicio.getMonth();
+
+  return Math.max(meses, 0);
+}
+
+function calcularAtivo(ativo) {
+  const meses = calcularMeses(ativo.data);
+
+  let taxaAnual = 0;
+
+  switch(ativo.tipo) {
+    case 'SELIC':
+    case 'CDI':
+      taxaAnual = (parseFloat(ativo.taxaBase) || 0) * ((parseFloat(ativo.percentualIndice) || 100) / 100);
+      break;
+
+    case 'IPCA':
+      taxaAnual = (parseFloat(ativo.taxaBase) || 0) + (parseFloat(ativo.adicional) || 0);
+      break;
+
+    case 'PREFIXADO':
+    case 'MANUAL':
+      taxaAnual = parseFloat(ativo.taxaBase) || 0;
+      break;
+  }
+
+  const taxaMensal = taxaAnual / 12 / 100;
+
+  let valor = parseFloat(ativo.valorInicial) || 0;
+  const aporte = parseFloat(ativo.aporteMensal) || 0;
+
+  let historico = [];
+
+  for(let i = 0; i <= meses; i++) {
+    valor = valor * (1 + taxaMensal);
+    valor += aporte;
+
+    historico.push(Number(valor.toFixed(2)));
+  }
+
+  return {
+    valorAtual: valor,
+    lucro: valor - ((parseFloat(ativo.valorInicial) || 0) + (aporte * meses)),
+    meses,
+    taxaAnual,
+    historico
+  };
+}
+
+function atualizarResumo() {
+  let totalInvestido = 0;
+  let totalAtual = 0;
+
+  ativos.forEach(ativo => {
+    const calc = calcularAtivo(ativo);
+
+    const meses = calcularMeses(ativo.data);
+
+    totalInvestido += (parseFloat(ativo.valorInicial) || 0) + ((parseFloat(ativo.aporteMensal) || 0) * meses);
+    totalAtual += calc.valorAtual;
+  });
+
+  document.getElementById('totalInvestido').innerText = formatarMoeda(totalInvestido);
+  document.getElementById('totalAtual').innerText = formatarMoeda(totalAtual);
+  document.getElementById('lucroTotal').innerText = formatarMoeda(totalAtual - totalInvestido);
+  document.getElementById('quantidadeAtivos').innerText = ativos.length;
+}
+
+function renderizar() {
+  const container = document.getElementById('ativosContainer');
+  container.innerHTML = '';
+
+  ativos.forEach((ativo, index) => {
+
+    const calc = calcularAtivo(ativo);
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-title">${ativo.nome || 'Novo Ativo'}</div>
+        <button class="delete-btn" onclick="removerAtivo(${index})">Excluir</button>
+      </div>
+
+      <div class="grid">
+
+        <div>
+          <label>Nome do ativo</label>
+          <input value="${ativo.nome}" onchange="editarCampo(${index}, 'nome', this.value)">
+        </div>
+
+        <div>
+          <label>Data de inclusão</label>
+          <input type="date" value="${ativo.data}" onchange="editarCampo(${index}, 'data', this.value)">
+        </div>
+
+        <div>
+          <label>Valor inicial</label>
+          <input type="number" value="${ativo.valorInicial}" onchange="editarCampo(${index}, 'valorInicial', this.value)">
+        </div>
+
+        <div>
+          <label>Aporte mensal</label>
+          <input type="number" value="${ativo.aporteMensal}" onchange="editarCampo(${index}, 'aporteMensal', this.value)">
+        </div>
+
+        <div>
+          <label>Tipo de rendimento</label>
+          <select onchange="editarCampo(${index}, 'tipo', this.value)">
+            <option value="SELIC" ${ativo.tipo === 'SELIC' ? 'selected' : ''}>SELIC</option>
+            <option value="CDI" ${ativo.tipo === 'CDI' ? 'selected' : ''}>CDI</option>
+            <option value="IPCA" ${ativo.tipo === 'IPCA' ? 'selected' : ''}>IPCA+</option>
+            <option value="PREFIXADO" ${ativo.tipo === 'PREFIXADO' ? 'selected' : ''}>Prefixado</option>
+            <option value="MANUAL" ${ativo.tipo === 'MANUAL' ? 'selected' : ''}>Manual</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Taxa base (%)</label>
+          <input type="number" step="0.01" value="${ativo.taxaBase}" onchange="editarCampo(${index}, 'taxaBase', this.value)">
+        </div>
+
+        <div>
+          <label>% do índice</label>
+          <input type="number" step="0.01" value="${ativo.percentualIndice}" onchange="editarCampo(${index}, 'percentualIndice', this.value)">
+        </div>
+
+        <div>
+          <label>Adicional (%)</label>
+          <input type="number" step="0.01" value="${ativo.adicional}" onchange="editarCampo(${index}, 'adicional', this.value)">
+        </div>
+
+        <div>
+          <label>Carência (dias)</label>
+          <input type="number" value="${ativo.carencia}" onchange="editarCampo(${index}, 'carencia', this.value)">
+        </div>
+
+        <div>
+          <label>Observações</label>
+          <textarea onchange="editarCampo(${index}, 'obs', this.value)">${ativo.obs || ''}</textarea>
+        </div>
+
+      </div>
+
+      <div class="tag">
+        ${calc.meses} meses simulados
+      </div>
+
+      <div class="result-box">
+
+        <div class="result-grid">
+
+          <div class="result-item">
+            <small>Valor Atual</small>
+            <strong class="green">${formatarMoeda(calc.valorAtual)}</strong>
+          </div>
+
+          <div class="result-item">
+            <small>Lucro Estimado</small>
+            <strong class="green">${formatarMoeda(calc.lucro)}</strong>
+          </div>
+
+          <div class="result-item">
+            <small>Taxa Anual</small>
+            <strong>${calc.taxaAnual.toFixed(2)}%</strong>
+          </div>
+
+          <div class="result-item">
+            <small>Carência</small>
+            <strong>${ativo.carencia || 0} dias</strong>
+          </div>
+
+        </div>
+
+      </div>
+
+      </div>
+    `;
+
+    container.appendChild(card);
+
+    
+
+  });
+
+  atualizarResumo();
+}
+
+function adicionarAtivo() {
+  ativos.push({
+    nome: 'Novo investimento',
+    data: new Date().toISOString().split('T')[0],
+    valorInicial: 1000,
+    aporteMensal: 0,
+    tipo: 'SELIC',
+    taxaBase: 14.75,
+    percentualIndice: 100,
+    adicional: 0,
+    carencia: 0,
+    obs: ''
+  });
+
+  salvar();
+  renderizar();
+}
+
+function editarCampo(index, campo, valor) {
+  ativos[index][campo] = valor;
+
+  salvar();
+  renderizar();
+}
+
+function removerAtivo(index) {
+
+  const confirmar = confirm('Deseja remover este ativo?');
+
+  if(!confirmar) return;
+
+  ativos.splice(index, 1);
+
+  salvar();
+  renderizar();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+
+  var botao = document.getElementById('addAtivoBtn');
+
+  if(botao) {
+    botao.addEventListener('click', function() {
+      adicionarAtivo();
+    });
+
+    botao.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      adicionarAtivo();
+    });
+  }
+
+});
+
+if(ativos.length === 0) {
+  adicionarAtivo();
+} else {
+  renderizar();
+}
+
+</script>
+
+</body>
+</html>
