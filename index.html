@@ -2,79 +2,102 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Investimentos Mobile</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulador de Investimentos</title>
     <style>
         * { 
             box-sizing: border-box; 
             margin: 0; 
             padding: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
+        body { background-color: #f5f7fb; color: #333; padding: 15px; font-size: 14px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        header { margin-bottom: 15px; text-align: center; padding: 5px 0; }
+        h1 { color: #1e293b; font-size: 22px; font-weight: 700; }
         
-        body { 
-            background-color: #f5f7fb; 
-            color: #333; 
-            padding: 15px;
-            font-size: 14px;
-        }
-
-        .container { 
-            max-width: 600px; 
-            margin: 0 auto; 
-        }
-
-        header { 
-            margin-bottom: 20px; 
-            text-align: center;
-            padding: 10px 0;
-        }
-        
-        h1 { 
-            color: #1e293b; 
-            font-size: 22px;
-            font-weight: 700;
-        }
-
-        .actions-top {
+        /* Painel de Resumo Geral no Topo */
+        .resumo-geral-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 16px;
             margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
         }
+        .resumo-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        .resumo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .resumo-item { display: flex; flex-direction: column; }
+        .resumo-label { font-size: 11px; color: #94a3b8; }
+        .resumo-val { font-size: 16px; font-weight: 700; margin-top: 2px; }
+        .resumo-val.destaque { color: #34d399; font-size: 18px; }
 
-        /* Botões */
-        button { 
+        .actions-top { 
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px; 
+        }
+        
+        .btn-add { 
             width: 100%;
-            background-color: #2563eb; 
+            background-color: #10b981; 
             color: white; 
             border: none; 
-            padding: 12px 20px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: 600; 
+            padding: 16px; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+            display: block;
+            text-align: center;
+            cursor: pointer;
+        }
+        .btn-add:active { background-color: #059669; }
+
+        .btn-salvar-geral {
+            width: 100%;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 700;
             font-size: 15px;
-            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-            transition: background 0.2s, transform 0.1s; 
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+            display: block;
+            text-align: center;
+            cursor: pointer;
         }
-        button:active {
-            transform: scale(0.98);
-        }
-        button.btn-add { 
-            background-color: #10b981; 
-            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-        }
-        button.btn-delete { 
+        .btn-salvar-geral:active { background-color: #1d4ed8; }
+        
+        .btn-delete { 
             background-color: #ef4444; 
+            color: white;
+            border: none;
             padding: 8px 15px;
+            border-radius: 6px;
             font-size: 13px;
-            width: auto;
-            box-shadow: none;
+            font-weight: 600;
+            cursor: pointer;
         }
 
-        /* Card de cada Ativo (Layout estilo Coluna/Mobile) */
         .ativo-card { 
             background: #fff; 
             border-radius: 12px; 
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
             padding: 16px; 
             margin-bottom: 24px; 
             border-top: 6px solid #2563eb;
@@ -82,123 +105,45 @@
             flex-direction: column;
             gap: 16px;
         }
-        
-        .ativo-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 1px solid #f1f5f9; 
-            padding-bottom: 10px; 
-        }
-        
-        .ativo-title {
-            font-size: 16px; 
-            color: #1e293b;
-            font-weight: 700;
-            word-break: break-all;
-            padding-right: 10px;
-        }
+        .ativo-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+        .ativo-title { font-size: 16px; color: #1e293b; font-weight: 700; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 15px; background-color: #fff; color: #1e293b; outline: none; }
 
-        /* Inputs empilhados verticalmente */
-        .form-group { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 6px; 
-        }
+        .taxa-dinamica-container { background-color: #f8fafc; padding: 12px; border-radius: 8px; border: 1px dashed #e2e8f0; display: flex; flex-direction: column; gap: 12px; }
+        .ativo-results { background: #f0fdf4; padding: 14px; border-radius: 8px; border: 1px solid #bbf7d0; }
+        .result-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
+        .result-row span { font-weight: 600; }
+        .result-total-box { margin-top: 10px; padding-top: 8px; border-top: 1px solid #bbf7d0; text-align: center; }
+        .result-total-val { font-size: 22px; font-weight: 800; color: #15803d; }
         
-        .form-group label { 
-            font-size: 12px; 
-            font-weight: 600; 
-            color: #64748b; 
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        input, select { 
-            width: 100%;
-            padding: 10px 12px; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 6px; 
-            font-size: 15px; 
-            background-color: #fff;
-            color: #1e293b;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        input:focus, select:focus {
-            border-color: #2563eb;
-        }
-
-        /* Container de Taxas Dinâmicas baseado no tipo */
-        .taxa-dinamica-container {
-            background-color: #f8fafc;
-            padding: 12px;
+        .chart-container-nativo {
+            background: #fafafa;
+            padding: 15px;
             border-radius: 8px;
-            border: 1px dashed #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            border: 1px solid #e2e8f0;
+            margin-top: 5px;
         }
-
-        /* Bloco de Resultados */
-        .ativo-results { 
-            background: #f0fdf4; 
-            padding: 14px; 
-            border-radius: 8px; 
-            border: 1px solid #bbf7d0;
-        }
-        
-        .result-row { 
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px; 
-            margin-bottom: 6px; 
-            color: #334155;
-        }
-        .result-row:last-child {
-            margin-bottom: 0;
-        }
-        .result-row span { 
-            font-weight: 600; 
-            color: #0f172a; 
-        }
-        
-        .result-total-box {
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1px solid #bbf7d0;
-            text-align: center;
-        }
-        .result-total-label {
-            font-size: 12px;
-            color: #166534;
-            font-weight: 600;
+        .chart-nativo-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
             text-transform: uppercase;
+            margin-bottom: 10px;
         }
-        .result-total-val {
-            font-size: 22px; 
-            font-weight: 800;
-            color: #15803d; 
+        .barra-grafico-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
         }
-        
-        /* Gráficos empilhados abaixo */
-        .ativo-charts { 
-            display: flex; 
-            flex-direction: column;
-            gap: 20px; 
-            margin-top: 8px;
-        }
-        
-        .chart-wrapper { 
-            position: relative; 
-            height: 220px; 
-            width: 100%; 
-            background: #fff;
-            padding: 5px;
-        }
-        .chart-wrapper.pizza {
-            height: 200px;
-        }
+        .barra-grafico-label { width: 90px; font-size: 12px; color: #475569; }
+        .barra-grafico-trilho { flex: 1; background: #e2e8f0; height: 16px; border-radius: 4px; overflow: hidden; position: relative; }
+        .barra-grafico-preenchimento { height: 100%; }
+        .barra-grafico-preenchimento.inicial { background-color: #475569; }
+        .barra-grafico-preenchimento.rendimento { background-color: #10b981; }
+        .barra-grafico-texto { font-size: 11px; font-weight: 600; padding-left: 5px; line-height: 16px; color: #1e293b; }
     </style>
 </head>
 <body>
@@ -208,305 +153,282 @@
         <h1>Simulador de Investimentos</h1>
     </header>
 
+    <div class="resumo-geral-box">
+        <div class="resumo-title">Resumo Geral da Carteira</div>
+        <div class="resumo-grid">
+            <div class="resumo-item">
+                <span class="resumo-label">Total Investido</span>
+                <span class="resumo-val" id="geral-investido">R$ 0,00</span>
+            </div>
+            <div class="resumo-item">
+                <span class="resumo-label">Valor Atual Total</span>
+                <span class="resumo-val destaque" id="geral-atual">R$ 0,00</span>
+            </div>
+        </div>
+    </div>
+
     <div class="actions-top">
-        <button class="btn-add" onclick="adicionarAtivo()">+ Adicionar Novo Ativo</button>
+        <button type="button" class="btn-add" onclick="adicionarNovoAtivoDireto()">+ Adicionar Novo Ativo</button>
+        <button type="button" class="btn-salvar-geral" onclick="salvarTodosCamposObterResultados(true)">💾 Recalcular e Salvar Dados</button>
     </div>
 
     <div id="lista-ativos"></div>
 </div>
 
 <script>
-    // Recupera a lista ou inicia vazia
-    let listaAtivos = JSON.parse(localStorage.getItem('simulador_ativos_v2')) || [];
-    let instanciasGraficos = {};
+    var listaAtivos = [];
 
-    function adicionarAtivo() {
-        const novoAtivo = {
-            id: Date.now().toString(),
-            nome: 'Novo Ativo',
+    try {
+        var dadosLocais = localStorage.getItem('simulador_v8_diario');
+        if (dadosLocais) {
+            listaAtivos = JSON.parse(dadosLocais);
+        }
+    } catch(err) {
+        listaAtivos = [];
+    }
+
+    function adicionarNovoAtivoDireto() {
+        salvarTodosCamposObterResultados(false);
+
+        var idUnico = "id_" + new Date().getTime() + "_" + Math.floor(Math.random() * 1000);
+        var novo = {
+            id: idUnico,
+            nome: 'Novo Ativo ' + (listaAtivos.length + 1),
             dataInclusao: new Date().toISOString().split('T')[0],
             valorInicial: 1000,
-            tipoRegra: 'pre', // pre, pos_cdi, ipca_mais, selic_mais
-            taxaPre: 10.50,   // usado se 'pre'
-            porcentagemCdi: 100, // usado se 'pos_cdi'
-            taxaSelicBase: 10.50, // taxa selic de mercado informada para esse ativo
-            taxaIpcaBase: 4.50,   // taxa ipca de mercado informada para esse ativo
-            taxaAdicional: 6.00   // o "+" do IPCA+6% ou SELIC+2%
+            tipoRegra: 'pre',
+            taxaPre: 10.50,
+            porcentagemCdi: 100,
+            taxaSelicBase: 10.50,
+            taxaIpcaBase: 4.50,
+            taxaAdicional: 6.00
         };
-        listaAtivos.push(novoAtivo);
-        salvarDados();
-        renderizarAtivos();
+        
+        listaAtivos.push(novo);
+        persistirNoBanco();
+        desenharTela();
     }
 
-    function deletarAtivo(id) {
-        if(confirm("Deseja realmente remover este ativo?")) {
-            listaAtivos = listaAtivos.filter(a => a.id !== id);
-            salvarDados();
-            renderizarAtivos();
+    function removerAtivoDireto(id) {
+        if(confirm("Deseja remover este ativo?")) {
+            listaAtivos = listaAtivos.filter(function(a) { return a.id !== id; });
+            persistirNoBanco();
+            desenharTela();
         }
     }
 
-    function atualizarAtivo(id, campo, valor) {
-        const ativo = listaAtivos.find(a => a.id === id);
+    function mudarTipoRentabilidade(id, tipo) {
+        var ativo = listaAtivos.find(function(a) { return a.id === id; });
         if (ativo) {
-            if (['valorInicial', 'taxaPre', 'porcentagemCdi', 'taxaSelicBase', 'taxaIpcaBase', 'taxaAdicional'].includes(campo)) {
-                ativo[campo] = parseFloat(valor) || 0;
-            } else {
-                ativo[campo] = valor;
-            }
-            salvarDados();
-            
-            // Se mudou o tipo de regra, precisamos redesenhar o card para mostrar os inputs certos
-            if (campo === 'tipoRegra') {
-                renderizarAtivos();
-            } else {
-                // Caso contrário, apenas recalcula valores e atualiza gráficos mantendo a tela estável
-                calcularResultadosAtivo(ativo);
-            }
+            ativo.tipoRegra = tipo;
+            persistirNoBanco();
+            desenharTela();
         }
     }
 
-    function salvarDados() {
-        localStorage.setItem('simulador_ativos_v2', JSON.stringify(listaAtivos));
+    function persistirNoBanco() {
+        try {
+            localStorage.setItem('simulador_v8_diario', JSON.stringify(listaAtivos));
+        } catch(e) {}
     }
 
-    function diferencaEmMeses(dataInicio, dataFim) {
-        const d1 = new Date(dataInicio);
-        const d2 = new Date(dataFim);
+    function salvarTodosCamposObterResultados(deveAvisar) {
+        if (!listaAtivos || listaAtivos.length === 0) return;
+
+        listaAtivos.forEach(function(ativo) {
+            var inputNome = document.getElementById('inp-nome-' + ativo.id);
+            var inputData = document.getElementById('inp-data-' + ativo.id);
+            var inputValor = document.getElementById('inp-valor-' + ativo.id);
+
+            if (inputNome) ativo.nome = inputNome.value;
+            if (inputData) ativo.dataInclusao = inputData.value;
+            if (inputValor) ativo.valorInicial = parseFloat(inputValor.value) || 0;
+
+            if (ativo.tipoRegra === 'pre') {
+                var tPre = document.getElementById('inp-tpre-' + ativo.id);
+                if (tPre) ativo.taxaPre = parseFloat(tPre.value) || 0;
+            } else if (ativo.tipoRegra === 'pos_cdi') {
+                var tSelic = document.getElementById('inp-tselic-' + ativo.id);
+                var pCdi = document.getElementById('inp-pcdi-' + ativo.id);
+                if (tSelic) ativo.taxaSelicBase = parseFloat(tSelic.value) || 0;
+                if (pCdi) ativo.porcentagemCdi = parseFloat(pCdi.value) || 0;
+            } else if (ativo.tipoRegra === 'ipca_mais') {
+                var tIpca = document.getElementById('inp-tipca-' + ativo.id);
+                var tAdic = document.getElementById('inp-tadic-' + ativo.id);
+                if (tIpca) ativo.taxaIpcaBase = parseFloat(tIpca.value) || 0;
+                if (tAdic) ativo.taxaAdicional = parseFloat(tAdic.value) || 0;
+            } else if (ativo.tipoRegra === 'selic_mais') {
+                var tSelicM = document.getElementById('inp-tselicm-' + ativo.id);
+                var tAdicM = document.getElementById('inp-tadicm-' + ativo.id);
+                if (tSelicM) ativo.taxaSelicBase = parseFloat(tSelicM.value) || 0;
+                if (tAdicM) ativo.taxaAdicional = parseFloat(tAdicM.value) || 0;
+            }
+
+            var txtTitulo = document.getElementById('txt-titulo-' + ativo.id);
+            if (txtTitulo) txtTitulo.innerText = ativo.nome;
+        });
+
+        persistirNoBanco();
+        
+        // Redesenha para atualizar os cálculos gerais de forma precisa
+        desenharTela();
+
+        if (deveAvisar === true) {
+            alert("Dados recalculados e guardados!");
+        }
+    }
+
+    // ALTERADO: Calcula a diferença exata em DIAS corridos
+    function calcularDiasEntreDatas(inicio, fim) {
+        var d1 = new Date(inicio + "T00:00:00");
+        var d2 = new Date(fim + "T00:00:00");
         if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return 0;
-        let meses = (d2.getFullYear() - d1.getFullYear()) * 12;
-        meses -= d1.getMonth();
-        meses += d2.getMonth();
-        return meses <= 0 ? 0 : meses;
+        
+        var diferencaTempo = d2.getTime() - d1.getTime();
+        var dias = Math.floor(diferencaTempo / (1000 * 60 * 60 * 24));
+        return dias <= 0 ? 0 : dias;
     }
 
-    function renderizarAtivos() {
-        const container = document.getElementById('lista-ativos');
-        container.innerHTML = '';
+    function desenharTela() {
+        var box = document.getElementById('lista-ativos');
+        if (!box) return;
+        box.innerHTML = '';
 
-        if(listaAtivos.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:#64748b; padding:40px 10px;">Nenhum ativo cadastrado. Clique no botão acima para começar!</div>`;
+        if (listaAtivos.length === 0) {
+            box.innerHTML = '<div style="text-align:center; color:#64748b; padding:40px 10px;">Nenhum ativo cadastrado. Toque no botão verde acima!</div>';
+            document.getElementById('geral-investido').innerText = 'R$ 0,00';
+            document.getElementById('geral-atual').innerText = 'R$ 0,00';
             return;
         }
 
-        listaAtivos.forEach(ativo => {
-            const card = document.createElement('div');
+        var totalInvestidoGeral = 0;
+        var totalAtualGeral = 0;
+
+        listaAtivos.forEach(function(ativo) {
+            var card = document.createElement('div');
             card.className = 'ativo-card';
-            card.id = `card-${ativo.id}`;
-            
-            // Gerar HTML condicional dos inputs de taxas de acordo com a regra selecionada
-            let htmlInputsTaxa = '';
+
+            var htmlTaxas = '';
             if (ativo.tipoRegra === 'pre') {
-                htmlInputsTaxa = `
-                    <div class="form-group">
-                        <label>Taxa Pré-Fixada Anual (%)</label>
-                        <input type="number" value="${ativo.taxaPre}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaPre', this.value)">
-                    </div>
-                `;
+                htmlTaxas = '<div class="form-group"><label>Taxa Pré-Fixada Anual (%)</label><input type="number" step="0.01" id="inp-tpre-'+ativo.id+'" value="'+ativo.taxaPre+'"></div>';
             } else if (ativo.tipoRegra === 'pos_cdi') {
-                htmlInputsTaxa = `
-                    <div class="form-group">
-                        <label>Valor da SELIC/CDI Atual (%)</label>
-                        <input type="number" value="${ativo.taxaSelicBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaSelicBase', this.value)">
-                    </div>
-                    <div class="form-group">
-                        <label>% do CDI contratado</label>
-                        <input type="number" value="${ativo.porcentagemCdi}" step="1" oninput="atualizarAtivo('${ativo.id}', 'porcentagemCdi', this.value)">
-                    </div>
-                `;
+                htmlTaxas = '<div class="form-group"><label>Valor da SELIC/CDI Atual (%)</label><input type="number" step="0.01" id="inp-tselic-'+ativo.id+'" value="'+ativo.taxaSelicBase+'"></div>' +
+                            '<div class="form-group"><label>% do CDI contratado</label><input type="number" step="1" id="inp-pcdi-'+ativo.id+'" value="'+ativo.porcentagemCdi+'"></div>';
             } else if (ativo.tipoRegra === 'ipca_mais') {
-                htmlInputsTaxa = `
-                    <div class="form-group">
-                        <label>IPCA Médio Estimado (%)</label>
-                        <input type="number" value="${ativo.taxaIpcaBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaIpcaBase', this.value)">
-                    </div>
-                    <div class="form-group">
-                        <label>Taxa Fixa Adicional (+ %)</label>
-                        <input type="number" value="${ativo.taxaAdicional}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaAdicional', this.value)">
-                    </div>
-                `;
+                htmlTaxas = '<div class="form-group"><label>IPCA Médio Estimado (%)</label><input type="number" step="0.01" id="inp-tipca-'+ativo.id+'" value="'+ativo.taxaIpcaBase+'"></div>' +
+                            '<div class="form-group"><label>Taxa Fixa Adicional (+ %)</label><input type="number" step="0.01" id="inp-tadic-'+ativo.id+'" value="'+ativo.taxaAdicional+'"></div>';
             } else if (ativo.tipoRegra === 'selic_mais') {
-                htmlInputsTaxa = `
-                    <div class="form-group">
-                        <label>Taxa SELIC Base (%)</label>
-                        <input type="number" value="${ativo.taxaSelicBase}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaSelicBase', this.value)">
-                    </div>
-                    <div class="form-group">
-                        <label>Taxa Fixa Adicional (+ %)</label>
-                        <input type="number" value="${ativo.taxaAdicional}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'taxaAdicional', this.value)">
-                    </div>
-                `;
+                htmlTaxas = '<div class="form-group"><label>Taxa SELIC Base (%)</label><input type="number" step="0.01" id="inp-tselicm-'+ativo.id+'" value="'+ativo.taxaSelicBase+'"></div>' +
+                            '<div class="form-group"><label>Taxa Fixa Adicional (+ %)</label><input type="number" step="0.01" id="inp-tadicm-'+ativo.id+'" value="'+ativo.taxaAdicional+'"></div>';
             }
 
             card.innerHTML = `
                 <div class="ativo-header">
-                    <span class="ativo-title" id="title-text-${ativo.id}">${ativo.nome}</span>
-                    <button class="btn-delete" onclick="deletarAtivo('${ativo.id}')">Excluir</button>
+                    <span class="ativo-title" id="txt-titulo-${ativo.id}">${ativo.nome}</span>
+                    <button type="button" class="btn-delete" onclick="removerAtivoDireto('${ativo.id}')">Excluir</button>
                 </div>
-
                 <div class="form-group">
                     <label>Nome do Ativo</label>
-                    <input type="text" value="${ativo.nome}" oninput="document.getElementById('title-text-${ativo.id}').innerText = this.value; atualizarAtivo('${ativo.id}', 'nome', this.value)">
+                    <input type="text" id="inp-nome-${ativo.id}" value="${ativo.nome}">
                 </div>
-
                 <div class="form-group">
                     <label>Data de Inclusão</label>
-                    <input type="date" value="${ativo.dataInclusao}" onchange="atualizarAtivo('${ativo.id}', 'dataInclusao', this.value)">
+                    <input type="date" id="inp-data-${ativo.id}" value="${ativo.dataInclusao}">
                 </div>
-
                 <div class="form-group">
-                    <label>Valor Inicial Investido (R$)</label>
-                    <input type="number" value="${ativo.valorInicial}" step="0.01" oninput="atualizarAtivo('${ativo.id}', 'valorInicial', this.value)">
+                    <label>Valor Inicial (R$)</label>
+                    <input type="number" step="0.01" id="inp-valor-${ativo.id}" value="${ativo.valorInicial}">
                 </div>
-
                 <div class="form-group">
-                    <label>Tipo de Rentabilidade</label>
-                    <select onchange="atualizarAtivo('${ativo.id}', 'tipoRegra', this.value)">
+                    <label>Rentabilidade</label>
+                    <select onchange="mudarTipoRentabilidade('${ativo.id}', this.value)">
                         <option value="pre" ${ativo.tipoRegra === 'pre' ? 'selected' : ''}>Pré-Fixado Puro</option>
                         <option value="pos_cdi" ${ativo.tipoRegra === 'pos_cdi' ? 'selected' : ''}>Pós-Fixado (% do CDI)</option>
-                        <option value="ipca_mais" ${ativo.tipoRegra === 'ipca_mais' ? 'selected' : ''}>IPCA + Taxa Fixa (ex: IPCA+6%)</option>
+                        <option value="ipca_mais" ${ativo.tipoRegra === 'ipca_mais' ? 'selected' : ''}>IPCA + Taxa Fixa</option>
                         <option value="selic_mais" ${ativo.tipoRegra === 'selic_mais' ? 'selected' : ''}>SELIC + Taxa Fixa</option>
                     </select>
                 </div>
-
-                <div class="taxa-dinamica-container">
-                    ${htmlInputsTaxa}
-                </div>
+                <div class="taxa-dinamica-container">${htmlTaxas}</div>
+                <div class="ativo-results" id="res-${ativo.id}"></div>
                 
-                <div class="ativo-results" id="resultados-${ativo.id}">
+                <div class="chart-container-nativo">
+                    <div class="chart-nativo-title">Proporção do Acumulado</div>
+                    <div class="barra-grafico-wrapper">
+                        <div class="barra-grafico-label">Investido:</div>
+                        <div class="barra-grafico-trilho">
+                            <div class="barra-grafico-preenchimento inicial" id="bar-ini-${ativo.id}" style="width: 100%"></div>
+                        </div>
                     </div>
-                
-                <div class="ativo-charts">
-                    <div class="chart-wrapper">
-                        <canvas id="chart-linha-${ativo.id}"></canvas>
-                    </div>
-                    <div class="chart-wrapper pizza">
-                        <canvas id="chart-pizza-${ativo.id}"></canvas>
+                    <div class="barra-grafico-wrapper">
+                        <div class="barra-grafico-label">Rendimento:</div>
+                        <div class="barra-grafico-trilho">
+                            <div class="barra-grafico-preenchimento rendimento" id="bar-rend-${ativo.id}" style="width: 0%"></div>
+                        </div>
                     </div>
                 </div>
             `;
+            box.appendChild(card);
             
-            container.appendChild(card);
-            calcularResultadosAtivo(ativo);
-        });
-    }
-
-    function calcularResultadosAtivo(ativo) {
-        const hoje = new Date().toISOString().split('T')[0];
-        const meses = diferencaEmMeses(ativo.dataInclusao, hoje);
-        
-        // Determina a taxa anual equivalente configurada exclusivamente para este ativo
-        let taxaAnualEquivalente = 0;
-        
-        if (ativo.tipoRegra === 'pre') {
-            taxaAnualEquivalente = ativo.taxaPre;
-        } else if (ativo.tipoRegra === 'pos_cdi') {
-            taxaAnualEquivalente = ativo.taxaSelicBase * (ativo.porcentagemCdi / 100);
-        } else if (ativo.tipoRegra === 'ipca_mais') {
-            // Conta de juros compostos para somar taxas inflacionárias: (1+IPCA)*(1+TaxaFixa) - 1
-            const ipcaM = ativo.taxaIpcaBase / 100;
-            const adiM = ativo.taxaAdicional / 100;
-            taxaAnualEquivalente = ((1 + ipcaM) * (1 + adiM) - 1) * 100;
-        } else if (ativo.tipoRegra === 'selic_mais') {
-            const selicM = ativo.taxaSelicBase / 100;
-            const adiM = ativo.taxaAdicional / 100;
-            taxaAnualEquivalente = ((1 + selicM) * (1 + adiM) - 1) * 100;
-        }
-
-        // Converte taxa anual para taxa mensal (Juros Compostos)
-        const taxaMensal = Math.pow(1 + (taxaAnualEquivalente / 100), 1 / 12) - 1;
-        
-        let dadosEvolucao = [];
-        let labelsMeses = [];
-        let valorAcumulado = ativo.valorInicial;
-
-        for (let i = 0; i <= meses; i++) {
-            if (i > 0) {
-                valorAcumulado = valorAcumulado * (1 + taxaMensal);
-            }
-            dadosEvolucao.push(valorAcumulado.toFixed(2));
-            labelsMeses.push(`Mês ${i}`);
-        }
-
-        const rendimentoTotal = valorAcumulado - ativo.valorInicial;
-        const divResultados = document.getElementById(`resultados-${ativo.id}`);
-        
-        if (divResultados) {
-            divResultados.innerHTML = `
-                <div class="result-row">Tempo decorrido: <span>${meses} meses</span></div>
-                <div class="result-row">Taxa Anual Calculada: <span>${taxaAnualEquivalente.toFixed(2)}% a.a.</span></div>
-                <div class="result-row">Capital Inicial: <span>R$ ${ativo.valorInicial.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
-                <div class="result-row">Rendimento Bruto: <span>R$ ${rendimentoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span></div>
-                <div class="result-total-box">
-                    <div class="result-total-label">Valor Atual Calculado</div>
-                    <div class="result-total-val">R$ ${valorAcumulado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                </div>
-            `;
-        }
-
-        gerarOuAtualizarGraficos(ativo.id, labelsMeses, dadosEvolucao, ativo.valorInicial, rendimentoTotal);
-    }
-
-    function gerarOuAtualizarGraficos(id, labels, dadosLinha, valorInicial, rendimento) {
-        const ctxLinha = document.getElementById(`chart-linha-${id}`);
-        const ctxPizza = document.getElementById(`chart-pizza-${id}`);
-
-        if (!ctxLinha || !ctxPizza) return;
-
-        if (instanciasGraficos[`linha-${id}`]) instanciasGraficos[`linha-${id}`].destroy();
-        if (instanciasGraficos[`pizza-${id}`]) instanciasGraficos[`pizza-${id}`].destroy();
-
-        // Linha - Evolução do Patrimônio
-        instanciasGraficos[`linha-${id}`] = new Chart(ctxLinha, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Evolução (R$)',
-                    data: dadosLinha,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.05)',
-                    fill: true,
-                    tension: 0.15,
-                    borderWidth: 2.5,
-                    pointRadius: labels.length > 24 ? 0 : 3
-                }]
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                plugins: { 
-                    legend: { display: false } 
-                },
-                scales: {
-                    x: { grid: { display: false } }
-                }
-            }
+            // Roda o cálculo individual e captura o retorno para somar no geral
+            var resultadoIndividual = recalcularValoresAtivo(ativo);
+            totalInvestidoGeral += resultadoIndividual.inicial;
+            totalAtualGeral += resultadoIndividual.acumulado;
         });
 
-        // Pizza - Proporção
-        instanciasGraficos[`pizza-${id}`] = new Chart(ctxPizza, {
-            type: 'pie',
-            data: {
-                labels: ['Capital Inicial', 'Rendimentos'],
-                datasets: [{
-                    data: [valorInicial.toFixed(2), rendimento > 0 ? rendimento.toFixed(2) : 0],
-                    backgroundColor: ['#475569', '#10b981'],
-                    borderWidth: 1
-                }]
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12 } }
-                }
-            }
-        });
+        // Atualiza o painel do topo com as somas totais de toda a carteira
+        document.getElementById('geral-investido').innerText = 'R$ ' + totalInvestidoGeral.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+        document.getElementById('geral-atual').innerText = 'R$ ' + totalAtualGeral.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
     }
 
-    // Inicialização da Tela
-    renderizarAtivos();
+    function recalcularValoresAtivo(ativo) {
+        var hoje = new Date().toISOString().split('T')[0];
+        // Descobre os dias exatos decorridos
+        var dias = calcularDiasEntreDatas(ativo.dataInclusao, hoje);
+        
+        var taxaAnual = 0;
+        if (ativo.tipoRegra === 'pre') taxaAnual = ativo.taxaPre;
+        else if (ativo.tipoRegra === 'pos_cdi') taxaAnual = ativo.taxaSelicBase * (ativo.porcentagemCdi / 100);
+        else if (ativo.tipoRegra === 'ipca_mais') taxaAnual = ((1 + (ativo.taxaIpcaBase / 100)) * (1 + (ativo.taxaAdicional / 100)) - 1) * 100;
+        else if (ativo.tipoRegra === 'selic_mais') taxaAnual = ((1 + (ativo.taxaSelicBase / 100)) * (1 + (ativo.taxaAdicional / 100)) - 1) * 100;
+
+        // FÓRMULA MUDADA: Conversão exata de taxa anual para taxa DIÁRIA equivalente com juros compostos
+        var taxaDiaria = Math.pow(1 + (taxaAnual / 100), 1 / 365) - 1;
+        
+        // Aplica a taxa baseada exatamente nos dias passados até HOJE
+        var acumulado = ativo.valorInicial * Math.pow(1 + taxaDiaria, dias);
+        var rendimento = acumulado - ativo.valorInicial;
+
+        var divRes = document.getElementById('res-' + ativo.id);
+        if (divRes) {
+            divRes.innerHTML = '<div class="result-row">Tempo decorrido: <span>'+dias+' dias</span></div>' +
+                               '<div class="result-row">Taxa Base Anual: <span>'+taxaAnual.toFixed(2)+'% a.a.</span></div>' +
+                               '<div class="result-row">Capital Inicial: <span>R$ '+ativo.valorInicial.toLocaleString('pt-BR', {minimumFractionDigits:2})+'</span></div>' +
+                               '<div class="result-row">Rendimento Líquido Diário: <span>R$ '+rendimento.toLocaleString('pt-BR', {minimumFractionDigits:2})+'</span></div>' +
+                               '<div class="result-total-box"><div style="font-size:11px; color:#166534; font-weight:600;">VALOR ATUAL REALIZADO ATÉ HOJE</div><div class="result-total-val">R$ '+acumulado.toLocaleString('pt-BR', {minimumFractionDigits:2})+'</div></div>';
+        }
+
+        setTimeout(function() {
+            var bIni = document.getElementById('bar-ini-' + ativo.id);
+            var bRend = document.getElementById('bar-rend-' + ativo.id);
+            if(bIni && bRend && acumulado > 0) {
+                var pIni = (ativo.valorInicial / acumulado) * 100;
+                var pRend = (rendimento / acumulado) * 100;
+                bIni.style.width = pIni + "%";
+                bIni.innerHTML = "<span class='barra-grafico-texto' style='color:#fff'>" + pIni.toFixed(0) + "%</span>";
+                bRend.style.width = pRend + "%";
+                bRend.innerHTML = "<span class='barra-grafico-texto' style='color:" + (pRend > 10 ? '#fff' : '#1e293b') + "'>" + pRend.toFixed(0) + "%</span>";
+            }
+        }, 30);
+
+        // Retorna os dados puros para alimentar a soma global do topo
+        return {
+            inicial: ativo.valorInicial,
+            acumulado: acumulado
+        };
+    }
+
+    // Inicialização direta
+    desenharTela();
 </script>
 
 </body>
